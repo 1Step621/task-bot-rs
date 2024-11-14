@@ -15,7 +15,7 @@ use crate::{save, Category, Context, Task};
 #[poise::command(slash_command)]
 /// タスクを追加します。
 pub async fn add_task(ctx: Context<'_>) -> Result<(), Error> {
-    let (mut message, task) = create_task(ctx, None, None).await?;
+    let (mut message, task) = create_task(ctx, CreateLabel::Add, None, None).await?;
 
     ctx.data().tasks.lock().unwrap().push(task.clone());
     save(ctx.data())?;
@@ -69,6 +69,7 @@ pub async fn edit_task(ctx: Context<'_>) -> Result<(), Error> {
 
     let (mut message, modified_task) = create_task(
         ctx,
+        CreateLabel::Edit,
         Some(task.clone()),
         Some(last_interaction.ok_or(anyhow!("No interaction"))?),
     )
@@ -81,7 +82,6 @@ pub async fn edit_task(ctx: Context<'_>) -> Result<(), Error> {
             .position(|x| *x == task)
             .ok_or(anyhow!("Task not found"))?;
 
-        println!("{:?} {:?} {:?}", pos, task, modified_task);
         tasks[pos] = modified_task.clone();
     }
     save(ctx.data())?;
@@ -95,7 +95,7 @@ pub async fn edit_task(ctx: Context<'_>) -> Result<(), Error> {
                         .title("タスクを編集しました")
                         .fields(vec![
                             task.to_field(),
-                            ("↓".to_owned(), "".to_owned(), false),
+                            ("↓".into(), "".into(), false),
                             modified_task.to_field(),
                         ])
                         .color(serenity::Color::DARK_GREEN),
@@ -106,9 +106,25 @@ pub async fn edit_task(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+enum CreateLabel {
+    Add,
+    Edit,
+}
+
+impl From<CreateLabel> for String {
+    fn from(label: CreateLabel) -> Self {
+        match label {
+            CreateLabel::Add => "追加",
+            CreateLabel::Edit => "編集",
+        }
+        .to_string()
+    }
+}
+
 async fn create_task(
     ctx: Context<'_>,
-    task: Option<Task>,
+    label: CreateLabel,
+    defaults: Option<Task>,
     interaction: Option<serenity::ComponentInteraction>,
 ) -> Result<(serenity::Message, Task), Error> {
     const CATEGORY: &str = "category";
@@ -117,7 +133,7 @@ async fn create_task(
     const TIME: &str = "time";
     const SUBMIT: &str = "submit";
 
-    let label = if task.is_some() { "編集" } else { "追加" };
+    let label = &String::from(label);
 
     let others = Uuid::new_v4().to_string();
 
@@ -129,7 +145,7 @@ async fn create_task(
             .iter()
             .map(|&c| {
                 serenity::CreateSelectMenuOption::new(c, c)
-                    .default_selection(task.clone().map_or(false, |x| x.category == c))
+                    .default_selection(defaults.clone().map_or(false, |x| x.category == c))
             })
             .collect(),
     };
@@ -138,7 +154,7 @@ async fn create_task(
             .iter()
             .map(|s| {
                 serenity::CreateSelectMenuOption::new(s, s)
-                    .default_selection(task.clone().map_or(false, |x| x.subject == *s))
+                    .default_selection(defaults.clone().map_or(false, |x| x.subject == *s))
             })
             .collect(),
     };
@@ -187,16 +203,16 @@ async fn create_task(
             ),
             serenity::CreateActionRow::SelectMenu(
                 serenity::CreateSelectMenu::new(DATE, date_options).placeholder(
-                    task.clone().map_or("日付".to_owned(), |x| {
-                        x.datetime.date_naive().format("%Y/%m/%d (%a)").to_string()
+                    defaults.clone().map_or("日付".into(), |x| {
+                        x.datetime.format("%Y/%m/%d (%a)").to_string()
                     }),
                 ),
             ),
             serenity::CreateActionRow::SelectMenu(
                 serenity::CreateSelectMenu::new(TIME, time_options).placeholder(
-                    task.clone().map_or("時間".to_owned(), |x| {
-                        x.datetime.format("%H:%M").to_string()
-                    }),
+                    defaults
+                        .clone()
+                        .map_or("時間".into(), |x| x.datetime.format("%H:%M").to_string()),
                 ),
             ),
             serenity::CreateActionRow::Buttons(vec![serenity::CreateButton::new(SUBMIT)
@@ -233,10 +249,10 @@ async fn create_task(
         .timeout(Duration::seconds(60 * 30).to_std()?)
         .stream();
 
-    let mut category: Option<Category> = task.clone().map(|x| x.category);
-    let mut subject: Option<String> = task.clone().map(|x| x.subject);
-    let mut date: Option<NaiveDate> = task.clone().map(|x| x.datetime.date_naive());
-    let mut time: Option<NaiveTime> = task.clone().map(|x| x.datetime.time());
+    let mut category: Option<Category> = defaults.clone().map(|x| x.category);
+    let mut subject: Option<String> = defaults.clone().map(|x| x.subject);
+    let mut date: Option<NaiveDate> = defaults.clone().map(|x| x.datetime.date_naive());
+    let mut time: Option<NaiveTime> = defaults.clone().map(|x| x.datetime.time());
 
     let mut last_interaction = None;
     while let Some(interaction) = interaction_stream.next().await {
@@ -560,7 +576,7 @@ async fn create_task(
     let DetailsModal { details } = poise::execute_modal_on_component_interaction::<DetailsModal>(
         ctx,
         last_interaction.ok_or(anyhow!("No interaction"))?,
-        task.clone().map(|x| DetailsModal { details: x.details }),
+        defaults.clone().map(|x| DetailsModal { details: x.details }),
         None,
     )
     .await?
@@ -587,7 +603,7 @@ impl From<SelectLabel> for String {
             SelectLabel::Remove => "削除",
             SelectLabel::Edit => "編集",
         }
-        .to_owned()
+        .to_string()
     }
 }
 
@@ -600,7 +616,7 @@ async fn select_task(
     const PREV: &str = "prev";
     const NEXT: &str = "next";
 
-    let label: &str = &String::from(label);
+    let label = &String::from(label);
 
     let mut page = 0;
     let components = |page: usize| {
@@ -637,7 +653,7 @@ async fn select_task(
                     .disabled(options.len() <= 25),
             ]),
             serenity::CreateActionRow::Buttons(vec![serenity::CreateButton::new(SUBMIT)
-                .style(serenity::ButtonStyle::Danger)
+                .style(serenity::ButtonStyle::Primary)
                 .label(label)]),
         ]
     };
