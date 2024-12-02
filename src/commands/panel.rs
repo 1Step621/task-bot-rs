@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{Context as _, Error};
-use chrono::Local;
+use chrono::{Local, NaiveDate};
 use itertools::Itertools;
 use poise::serenity_prelude::*;
 use {futures::StreamExt, Mentionable};
@@ -122,13 +122,14 @@ async fn log(ctx: &Context, user: &User, message: impl Into<String>) -> Result<(
 async fn show_tasks(interaction: ComponentInteraction, ctx: Context) -> Result<(), Error> {
     const PREV: &str = "prev";
     const NEXT: &str = "next";
+    let today: NaiveDate = Local::now().date_naive();
 
     let mut page = 0;
     let message = |page: usize| -> Result<_, Error> {
         let tasks = data::load()?.tasks.lock().unwrap().clone();
         let fields = tasks
             .iter()
-            .filter(|e| Local::now() <= e.datetime)
+            .filter(|e| today <= e.datetime.date_naive())
             .sorted_by_key(|e| e.datetime)
             .map(|task| task.to_field())
             .skip(TASKS_PER_PAGE * page);
