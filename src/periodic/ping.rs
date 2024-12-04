@@ -54,7 +54,7 @@ pub async fn ping(ctx: &Context) -> Result<(), Error> {
     ping_channel
         .send_message(
             ctx,
-            if tasks.len() > 0 {
+            if !tasks.is_empty() {
                 CreateMessage::default().content(format!("{}", ping_role.mention()))
             } else {
                 CreateMessage::default()
