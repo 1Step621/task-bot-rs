@@ -4,6 +4,7 @@ use poise::serenity_prelude::*;
 use crate::{
     data,
     interactions::{create_task, select_task},
+    periodic::ping,
     PartialTask, PoiseContext,
 };
 
@@ -36,6 +37,8 @@ pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;
+
+    ping::update(&ctx).await?;
 
     Ok(())
 }
@@ -71,6 +74,8 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;
+
+    ping::update(&ctx).await?;
 
     Ok(())
 }
@@ -123,6 +128,8 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;
+
+    ping::update(&ctx).await?;
 
     Ok(())
 }
