@@ -132,18 +132,19 @@ async fn show_tasks(interaction: ComponentInteraction, ctx: Context) -> Result<(
             .filter(|e| Local::now().date_naive() <= e.datetime.date_naive())
             .sorted_by_key(|e| e.datetime)
             .map(|task| task.to_field())
-            .skip(TASKS_PER_PAGE * page);
+            .skip(TASKS_PER_PAGE * page)
+            .collect::<Vec<_>>();
 
         CreateInteractionResponseMessage::new()
             .embed(
                 CreateEmbed::default()
                     .title("タスク一覧")
-                    .description(if fields.len() == 0 {
+                    .description(if fields.is_empty() {
                         "ありません！:tada:"
                     } else {
                         ""
                     })
-                    .fields(fields.clone().take(TASKS_PER_PAGE))
+                    .fields(fields.clone().into_iter().take(TASKS_PER_PAGE))
                     .color(Color::DARK_BLUE),
             )
             .components(vec![CreateActionRow::Buttons(vec![
@@ -221,18 +222,19 @@ async fn show_archived_tasks(interaction: ComponentInteraction, ctx: Context) ->
             .sorted_by_key(|e| e.datetime)
             .rev()
             .map(|task| task.to_field())
-            .skip(TASKS_PER_PAGE * page);
+            .skip(TASKS_PER_PAGE * page)
+            .collect::<Vec<_>>();
 
         CreateInteractionResponseMessage::new()
             .embed(
                 CreateEmbed::default()
                     .title("過去のタスク一覧")
-                    .description(if fields.len() == 0 {
+                    .description(if fields.is_empty() {
                         "ありません"
                     } else {
                         ""
                     })
-                    .fields(fields.clone().take(TASKS_PER_PAGE).collect::<Vec<_>>())
+                    .fields(fields.clone().into_iter().take(TASKS_PER_PAGE))
                     .color(Color::DARK_BLUE),
             )
             .components(vec![CreateActionRow::Buttons(vec![

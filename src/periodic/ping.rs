@@ -18,10 +18,10 @@ fn search_tasks(from: DateTime<Local>, to: DateTime<Local>) -> Result<Vec<Task>,
         .collect())
 }
 
-fn embed(tasks: Vec<Task>) -> Result<CreateEmbed, Error> {
-    let fields = tasks.iter().map(|task| task.to_field());
+fn embed(tasks: Vec<Task>) -> CreateEmbed {
+    let fields = tasks.iter().map(|task| task.to_field()).collect::<Vec<_>>();
 
-    Ok(if fields.len() > 0 {
+    if !fields.is_empty() {
         CreateEmbed::default()
             .title("タスク通知")
             .description("明日のタスクをお知らせします！")
@@ -32,7 +32,7 @@ fn embed(tasks: Vec<Task>) -> Result<CreateEmbed, Error> {
             .title("タスク通知")
             .description("明日のタスクはありません:tada:")
             .color(Color::DARK_GREEN)
-    })
+    }
 }
 
 pub async fn ping(ctx: &Context) -> Result<(), Error> {
@@ -54,12 +54,13 @@ pub async fn ping(ctx: &Context) -> Result<(), Error> {
     ping_channel
         .send_message(
             ctx,
-            if !tasks.is_empty() {
-                CreateMessage::default().content(format!("{}", ping_role.mention()))
-            } else {
-                CreateMessage::default()
-            }
-            .embed(embed(tasks)?),
+            CreateMessage::default()
+                .content(if !tasks.is_empty() {
+                    format!("{}", ping_role.mention())
+                } else {
+                    "".into()
+                })
+                .embed(embed(tasks)),
         )
         .await?;
 
@@ -96,7 +97,7 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
 
     let prev_embed = prev_message.embeds[0].clone();
 
-    if CreateEmbed::from(prev_embed) != embed(search_tasks(from, to)?)? {
+    if CreateEmbed::from(prev_embed) != embed(search_tasks(from, to)?) {
         ping_channel
             .send_message(
                 ctx,
@@ -106,7 +107,7 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
                         "{}\n更新があります！ご注意ください！",
                         ping_role.mention()
                     ))
-                    .embed(embed(search_tasks(from, to)?)?),
+                    .embed(embed(search_tasks(from, to)?)),
             )
             .await?;
         println!("Message updated");
