@@ -94,27 +94,45 @@ pub struct Task {
 
 impl Task {
     pub fn to_field(&self) -> (String, String, bool) {
-        (
-            format!(
-                "【{}】{}{}",
-                self.category,
-                match &self.subject {
-                    Subject::Set(s) => format!("{} ", s),
-                    Subject::Unset => "".to_string(),
-                },
-                self.details
-            ),
-            format!(
-                "<t:{}:F>(<t:{}:R>)",
-                self.datetime.timestamp(),
-                self.datetime.timestamp()
-            ),
-            false,
-        )
+        self.clone().into()
     }
 
     pub fn as_partial(&self) -> PartialTask {
         self.clone().into()
+    }
+}
+
+impl From<Task> for (String, String, bool) {
+    fn from(task: Task) -> Self {
+        (
+            format!(
+                "【{}】{}{}",
+                task.category,
+                match &task.subject {
+                    Subject::Set(s) => format!("{} ", s),
+                    Subject::Unset => "".to_string(),
+                },
+                task.details
+            ),
+            format!(
+                "<t:{}:F>(<t:{}:R>)",
+                task.datetime.timestamp(),
+                task.datetime.timestamp()
+            ),
+            false,
+        )
+    }
+}
+
+impl From<Task> for PartialTask {
+    fn from(task: Task) -> Self {
+        Self {
+            category: Some(task.category),
+            subject: Some(task.subject.clone()),
+            details: Some(task.details.clone()),
+            date: Some(task.datetime.date_naive()),
+            time: Some(task.datetime.time()),
+        }
     }
 }
 
@@ -144,18 +162,6 @@ impl PartialTask {
             details,
             datetime,
         })
-    }
-}
-
-impl From<Task> for PartialTask {
-    fn from(task: Task) -> Self {
-        Self {
-            category: Some(task.category),
-            subject: Some(task.subject),
-            details: Some(task.details),
-            date: Some(task.datetime.date_naive()),
-            time: Some(task.datetime.time()),
-        }
     }
 }
 
