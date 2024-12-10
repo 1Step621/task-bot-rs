@@ -73,46 +73,45 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
     let ping_role = (*data.ping_role.lock().unwrap()).context("Ping role not set")?;
 
-    let prev_message = ping_channel
+    let prev_messages = ping_channel
         .messages(ctx, GetMessages::default())
         .await?
         .into_iter()
         .sorted_by_key(|m| m.id.created_at())
         .rev()
-        .find(|m| {
+        .filter(|m| {
             m.author.id == ctx.framework().bot_id
                 && Local::now().date_naive() - TimeDelta::days(1) <= m.id.created_at().date_naive()
+                && m.referenced_message.is_none()
         });
-    let Some(prev_message) = prev_message else {
-        println!("No previous embed found; Updating not needed");
-        return Ok(());
-    };
 
-    let from = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(1))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-    let to = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(2))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
+    for prev_message in prev_messages {
+        let from = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(1))
+            .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+            .unwrap();
+        let to = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(2))
+            .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+            .unwrap();
 
-    let prev_embed = prev_message.embeds[0].clone();
+        let prev_embed = prev_message.embeds[0].clone();
 
-    if CreateEmbed::from(prev_embed) != embed(search_tasks(from, to)?) {
-        ping_channel
-            .send_message(
-                ctx,
-                CreateMessage::default()
-                    .reference_message(&prev_message)
-                    .content(format!(
-                        "{}\n更新があります！ご注意ください！",
-                        ping_role.mention()
-                    ))
-                    .embed(embed(search_tasks(from, to)?)),
-            )
-            .await?;
-        println!("Message updated");
-    } else {
-        println!("No changes; Updating not needed");
+        if CreateEmbed::from(prev_embed) != embed(search_tasks(from, to)?) {
+            ping_channel
+                .send_message(
+                    ctx,
+                    CreateMessage::default()
+                        .reference_message(&prev_message)
+                        .content(format!(
+                            "{}\n更新があります！ご注意ください！",
+                            ping_role.mention()
+                        ))
+                        .embed(embed(search_tasks(from, to)?)),
+                )
+                .await?;
+            println!("{}: Message updated", prev_message.id.created_at());
+        } else {
+            println!("{}: No changes; Updating not needed", prev_message.id.created_at());
+        }
     }
 
     Ok(())
