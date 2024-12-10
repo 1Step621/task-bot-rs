@@ -1,5 +1,5 @@
 use anyhow::{Context as _, Error};
-use chrono::{DateTime, Duration, Local, NaiveTime};
+use chrono::{DateTime, Duration, Local, NaiveTime, TimeDelta};
 use itertools::Itertools;
 use poise::serenity_prelude::*;
 
@@ -73,13 +73,6 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
     let ping_role = (*data.ping_role.lock().unwrap()).context("Ping role not set")?;
 
-    let from = (Local::now() + Duration::days(1))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-    let to = (Local::now() + Duration::days(2))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-
     let prev_message = ping_channel
         .messages(ctx, GetMessages::default())
         .await?
@@ -88,12 +81,19 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
         .rev()
         .find(|m| {
             m.author.id == ctx.framework().bot_id
-                && m.id.created_at().date_naive() == Local::now().date_naive()
+                && Local::now().date_naive() - TimeDelta::days(1) <= m.id.created_at().date_naive()
         });
     let Some(prev_message) = prev_message else {
         println!("No previous embed found; Updating not needed");
         return Ok(());
     };
+
+    let from = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(1))
+        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        .unwrap();
+    let to = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(2))
+        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        .unwrap();
 
     let prev_embed = prev_message.embeds[0].clone();
 
