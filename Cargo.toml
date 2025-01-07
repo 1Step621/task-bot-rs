@@ -8,7 +8,7 @@ anyhow = "1.0.93"
 chrono = "0.4.38"
 dotenvy = "0.15.7"
 itertools = "0.13.0"
-poise = {git="https://github.com/serenity-rs/poise.git"}
+poise = {git = "https://github.com/serenity-rs/poise.git"}
 serde = {version = "1.0.214", features = ["derive"]}
 serde_json = "1.0.132"
 tokio = {version = "1.41.1", features = ["rt-multi-thread", "fs"]}
