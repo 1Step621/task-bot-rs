@@ -6,7 +6,7 @@ use poise::serenity_prelude::*;
 
 use crate::{data, PoiseContext};
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
 /// タスク通知を送るチャンネルを設定します。
 pub async fn set_ping_channel(ctx: PoiseContext<'_>) -> Result<(), Error> {
     ctx.data()
@@ -29,7 +29,7 @@ pub async fn set_ping_channel(ctx: PoiseContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
 /// タスク通知を送るロールを設定します。
 pub async fn set_ping_role(ctx: PoiseContext<'_>) -> Result<(), Error> {
     const ROLE: &str = "role";

@@ -4,7 +4,7 @@ use poise::serenity_prelude::*;
 
 use crate::{data, PoiseContext};
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
 /// 管理者向けログを送るチャンネルを設定します。
 pub async fn set_log_channel(ctx: PoiseContext<'_>) -> Result<(), Error> {
     ctx.data()

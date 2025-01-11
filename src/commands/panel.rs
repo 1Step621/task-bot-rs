@@ -12,7 +12,7 @@ const TASKS: &str = "tasks";
 const ARCHIVED_TASKS: &str = "archived_tasks";
 const TASKS_PER_PAGE: usize = 7;
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
 /// パネルをデプロイします。
 pub async fn deploy_panel(ctx: PoiseContext<'_>) -> Result<(), Error> {
     let message = ctx
