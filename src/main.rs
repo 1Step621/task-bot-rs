@@ -17,31 +17,43 @@ async fn event_handler(
     _framework: poise::FrameworkContext<'_, Data, Error>,
     data: &Data,
 ) -> Result<(), Error> {
-    if let FullEvent::Ready { data_about_bot } = event {
-        println!("Logged in as {}", data_about_bot.user.name);
-        match data::load() {
-            Ok(restore) => {
-                *data.tasks.lock().unwrap() = restore.tasks.lock().unwrap().clone();
-                *data.subjects.lock().unwrap() = restore.subjects.lock().unwrap().clone();
-                *data.suggest_times.lock().unwrap() = restore.suggest_times.lock().unwrap().clone();
-                *data.panel_message.lock().unwrap() = *restore.panel_message.lock().unwrap();
-                *data.ping_channel.lock().unwrap() = *restore.ping_channel.lock().unwrap();
-                *data.ping_role.lock().unwrap() = *restore.ping_role.lock().unwrap();
-                *data.log_channel.lock().unwrap() = *restore.log_channel.lock().unwrap();
-                println!("Config restored:");
-                println!("{:#?}", data);
+    match event {
+        FullEvent::Ready { data_about_bot } => {
+            println!("Logged in as {}", data_about_bot.user.name);
+            match data::load() {
+                Ok(restore) => {
+                    *data.tasks.lock().unwrap() = restore.tasks.lock().unwrap().clone();
+                    *data.subjects.lock().unwrap() = restore.subjects.lock().unwrap().clone();
+                    *data.suggest_times.lock().unwrap() =
+                        restore.suggest_times.lock().unwrap().clone();
+                    *data.panel_message.lock().unwrap() = *restore.panel_message.lock().unwrap();
+                    *data.ping_channel.lock().unwrap() = *restore.ping_channel.lock().unwrap();
+                    *data.ping_role.lock().unwrap() = *restore.ping_role.lock().unwrap();
+                    *data.log_channel.lock().unwrap() = *restore.log_channel.lock().unwrap();
+                    println!("Config restored:");
+                    println!("{:#?}", data);
+                }
+                Err(_) => {
+                    println!("Note: {} not found, using default data", data::FILE_PATH);
+                    data::save(data)?;
+                }
             }
-            Err(_) => {
-                println!("Note: {} not found, using default data", data::FILE_PATH);
-                data::save(data)?;
+            tokio::spawn(periodic::wait(ctx.clone()));
+            if let Some(panel_message) = &*data.panel_message.lock().unwrap() {
+                data.panel_listener.lock().unwrap().replace(tokio::spawn(
+                    commands::panel::listen_panel_interactions(ctx.clone(), *panel_message),
+                ));
             }
         }
-        tokio::spawn(periodic::wait(ctx.clone()));
-        if let Some(panel_message) = &*data.panel_message.lock().unwrap() {
-            data.panel_listener.lock().unwrap().replace(tokio::spawn(
-                commands::panel::listen_panel_interactions(ctx.clone(), *panel_message),
-            ));
+        FullEvent::InteractionCreate { interaction } => {
+            if let Some(command_interaction) = interaction.as_command() {
+                println!(
+                    "{}: Invoked by {}",
+                    command_interaction.data.name, command_interaction.user.name
+                );
+            }
         }
+        _ => {}
     }
     Ok(())
 }
