@@ -136,7 +136,7 @@ pub async fn remove_suggest_time(ctx: PoiseContext<'_>) -> Result<(), Error> {
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

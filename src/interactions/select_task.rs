@@ -4,7 +4,10 @@ use futures::StreamExt;
 use itertools::Itertools;
 use poise::serenity_prelude::*;
 
-use crate::{utilities::{format_datetime, ResponsiveInteraction}, PoiseContext, Task};
+use crate::{
+    utilities::{format_datetime, ResponsiveInteraction},
+    PoiseContext, Task,
+};
 
 pub async fn select_task(
     ctx: PoiseContext<'_>,
@@ -135,9 +138,9 @@ pub async fn select_task(
                     last_interaction.replace(interaction);
                     break;
                 }
-                _ => {}
+                _ => unreachable!(),
             },
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

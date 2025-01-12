@@ -120,7 +120,7 @@ pub async fn remove_subject(ctx: PoiseContext<'_>) -> Result<(), Error> {
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

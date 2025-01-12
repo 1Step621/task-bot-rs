@@ -168,7 +168,7 @@ pub async fn create_task(
                     TIME => {
                         task.time = serde_json::from_str(&values[0])?;
                     }
-                    _ => {}
+                    _ => unreachable!(),
                 }
                 let response = CreateInteractionResponse::UpdateMessage(
                     CreateInteractionResponseMessage::default().components(components(&task)),
@@ -181,7 +181,7 @@ pub async fn create_task(
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

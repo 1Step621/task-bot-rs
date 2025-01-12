@@ -93,7 +93,7 @@ pub async fn set_ping_role(ctx: PoiseContext<'_>) -> Result<(), Error> {
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
     ctx.data()

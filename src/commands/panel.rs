@@ -87,7 +87,7 @@ pub async fn listen_panel_interactions(
             ARCHIVED_TASKS => {
                 tokio::spawn(show_archived_tasks(interaction.clone(), ctx.clone()));
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 
@@ -201,7 +201,7 @@ async fn show_tasks(interaction: ComponentInteraction, ctx: Context) -> Result<(
                     )
                     .await?;
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 
@@ -291,7 +291,7 @@ async fn show_archived_tasks(interaction: ComponentInteraction, ctx: Context) ->
                     )
                     .await?;
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

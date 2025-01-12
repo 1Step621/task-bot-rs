@@ -99,7 +99,7 @@ pub async fn select_time(
                         );
                         interaction.create_response(ctx, response).await?;
                     }
-                    _ => {}
+                    _ => unreachable!(),
                 }
             }
             ComponentInteractionDataKind::Button => {
@@ -108,7 +108,7 @@ pub async fn select_time(
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 

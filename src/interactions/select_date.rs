@@ -176,7 +176,7 @@ pub async fn select_date(
                             .create_response(ctx, CreateInteractionResponse::Acknowledge)
                             .await?;
                     }
-                    _ => {}
+                    _ => unreachable!(),
                 }
             }
             ComponentInteractionDataKind::Button => {
@@ -185,9 +185,12 @@ pub async fn select_date(
                     break;
                 }
             }
-            _ => {}
+            _ => unreachable!(),
         }
     }
 
-    Ok((ResponsiveInteraction::Component(last_interaction.context("No interaction")?), date))
+    Ok((
+        ResponsiveInteraction::Component(last_interaction.context("No interaction")?),
+        date,
+    ))
 }

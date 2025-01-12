@@ -1,6 +1,5 @@
-use anyhow::{anyhow, Error};
+use anyhow::{Context, Error};
 use chrono::Duration;
-use futures::StreamExt;
 use poise::serenity_prelude::*;
 
 use crate::{utilities::ResponsiveInteraction, PoiseContext};
@@ -46,24 +45,18 @@ pub async fn select_announce(
         .await?
     };
 
-    let mut interaction_stream = message
+    let interaction = message
         .await_component_interaction(ctx)
         .timeout(Duration::days(7).to_std()?)
-        .stream();
+        .await
+        .context("No interaction")?;
 
-    while let Some(interaction) = interaction_stream.next().await {
-        match &interaction.data.kind {
-            ComponentInteractionDataKind::Button => match interaction.data.custom_id.as_str() {
-                ANNOUNCE => return Ok((ResponsiveInteraction::Component(interaction), true)),
-                CANCEL => return Ok((ResponsiveInteraction::Component(interaction), false)),
-                _ => {}
-            },
-            _ => {}
-        }
-        interaction
-            .create_response(ctx, CreateInteractionResponse::Acknowledge)
-            .await?;
+    match &interaction.data.kind {
+        ComponentInteractionDataKind::Button => match interaction.data.custom_id.as_str() {
+            ANNOUNCE => Ok((ResponsiveInteraction::Component(interaction), true)),
+            CANCEL => Ok((ResponsiveInteraction::Component(interaction), false)),
+            _ => unreachable!(),
+        },
+        _ => unreachable!(),
     }
-
-    Err(anyhow!("No interaction"))
 }
