@@ -86,7 +86,7 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
     data::save(ctx.data())?;
 
     let embed = CreateEmbed::default()
-        .title("削除しました")
+        .title("タスクを削除しました")
         .fields(vec![task.to_field()])
         .color(Color::DARK_RED);
 
