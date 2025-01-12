@@ -7,16 +7,16 @@ use poise::serenity_prelude::*;
 
 use crate::{
     interactions::{select_date, select_time},
-    utilities::format_date,
+    utilities::{format_date, ResponsiveInteraction},
     Category, PartialTask, PoiseContext, Subject, Task,
 };
 
 pub async fn create_task(
     ctx: PoiseContext<'_>,
-    interaction: Option<ComponentInteraction>,
+    interaction: Option<ResponsiveInteraction>,
     embed: Option<CreateEmbed>,
     defaults: PartialTask,
-) -> Result<(ModalInteraction, Task), Error> {
+) -> Result<(ResponsiveInteraction, Task), Error> {
     const CATEGORY: &str = "category";
     const SUBJECT: &str = "subject";
     const DATE: &str = "date";
@@ -177,7 +177,7 @@ pub async fn create_task(
             }
             ComponentInteractionDataKind::Button => {
                 if interaction.data.custom_id == SUBMIT {
-                    last_interaction.replace(interaction);
+                    last_interaction.replace(ResponsiveInteraction::Component(interaction));
                     break;
                 }
             }
@@ -224,6 +224,7 @@ pub async fn create_task(
     let response = last_interaction
         .clone()
         .context("No interaction")?
+        .unwrap_component()
         .quick_modal(ctx.serenity_context(), modal)
         .await?;
 
@@ -236,5 +237,5 @@ pub async fn create_task(
 
     let task = task.unpartial()?;
 
-    Ok((interaction, task))
+    Ok((ResponsiveInteraction::Modal(interaction), task))
 }

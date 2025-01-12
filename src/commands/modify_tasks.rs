@@ -1,9 +1,9 @@
-use anyhow::Error;
+use anyhow::{Context, Error};
 use poise::serenity_prelude::*;
 
 use crate::{
     data,
-    interactions::{create_task, select_task},
+    interactions::{create_task, select_announce, select_task},
     periodic::ping,
     PartialTask, PoiseContext,
 };
@@ -11,7 +11,9 @@ use crate::{
 #[poise::command(slash_command)]
 /// タスクを追加します。
 pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
-    let (last_interaction, task) = create_task(
+    let ping_role = (*ctx.data().ping_role.lock().unwrap()).context("Ping role not set")?;
+
+    let (mut last_interaction, task) = create_task(
         ctx,
         None,
         Some(
@@ -26,19 +28,37 @@ pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
     ctx.data().tasks.lock().unwrap().insert(task.clone());
     data::save(ctx.data())?;
 
+    let embed = CreateEmbed::default()
+        .title("タスクを追加しました")
+        .fields(vec![task.to_field()])
+        .color(Color::DARK_GREEN);
+
+    if let Some(message) = ping::update(&ctx).await? {
+        let announce;
+        (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
+        if announce {
+            message
+                .channel_id
+                .send_message(
+                    ctx,
+                    CreateMessage::default()
+                        .content(format!(
+                            "{}\nタスクが追加されました！ご注意ください！",
+                            ping_role.mention()
+                        ))
+                        .embed(embed.clone())
+                        .reference_message(&message),
+                )
+                .await?;
+        }
+    }
+
     let response = CreateInteractionResponse::UpdateMessage(
         CreateInteractionResponseMessage::default()
-            .embed(
-                CreateEmbed::default()
-                    .title("タスクを追加しました")
-                    .fields(vec![task.to_field()])
-                    .color(Color::DARK_GREEN),
-            )
+            .embed(embed)
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;
-
-    ping::update(&ctx).await?;
 
     Ok(())
 }
@@ -46,7 +66,9 @@ pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 /// タスクを削除します。
 pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
-    let (last_interaction, task) = select_task(
+    let ping_role = (*ctx.data().ping_role.lock().unwrap()).context("Ping role not set")?;
+
+    let (mut last_interaction, task) = select_task(
         ctx,
         None,
         Some(
@@ -63,14 +85,34 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
     }
     data::save(ctx.data())?;
 
+    let embed = CreateEmbed::default()
+        .title("削除しました")
+        .fields(vec![task.to_field()])
+        .color(Color::DARK_RED);
+
+    if let Some(message) = ping::update(&ctx).await? {
+        let announce;
+        (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
+        if announce {
+            message
+                .channel_id
+                .send_message(
+                    ctx,
+                    CreateMessage::default()
+                        .content(format!(
+                            "{}\nタスクが削除されました！ご注意ください！",
+                            ping_role.mention()
+                        ))
+                        .embed(embed.clone())
+                        .reference_message(&message),
+                )
+                .await?;
+        }
+    }
+
     let response = CreateInteractionResponse::UpdateMessage(
         CreateInteractionResponseMessage::default()
-            .embed(
-                CreateEmbed::default()
-                    .title("削除しました")
-                    .fields(vec![task.to_field()])
-                    .color(Color::DARK_RED),
-            )
+            .embed(embed)
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;
@@ -83,6 +125,8 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 /// タスクを編集します。
 pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
+    let ping_role = (*ctx.data().ping_role.lock().unwrap()).context("Ping role not set")?;
+
     let (last_interaction, task) = select_task(
         ctx,
         None,
@@ -94,7 +138,7 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
     )
     .await?;
 
-    let (last_interaction, modified_task) = create_task(
+    let (mut last_interaction, modified_task) = create_task(
         ctx,
         Some(last_interaction),
         Some(
@@ -113,18 +157,38 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
     }
     data::save(ctx.data())?;
 
+    let embed = CreateEmbed::default()
+        .title("タスクを編集しました")
+        .fields(vec![
+            task.to_field(),
+            ("↓".into(), "".into(), false),
+            modified_task.to_field(),
+        ])
+        .color(Color::DARK_GREEN);
+
+    if let Some(message) = ping::update(&ctx).await? {
+        let announce;
+        (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
+        if announce {
+            message
+                .channel_id
+                .send_message(
+                    ctx,
+                    CreateMessage::default()
+                        .content(format!(
+                            "{}\nタスクが編集されました！ご注意ください！",
+                            ping_role.mention()
+                        ))
+                        .embed(embed.clone())
+                        .reference_message(&message),
+                )
+                .await?;
+        }
+    }
+
     let response = CreateInteractionResponse::UpdateMessage(
         CreateInteractionResponseMessage::default()
-            .embed(
-                CreateEmbed::default()
-                    .title("タスクを編集しました")
-                    .fields(vec![
-                        task.to_field(),
-                        ("↓".into(), "".into(), false),
-                        modified_task.to_field(),
-                    ])
-                    .color(Color::DARK_GREEN),
-            )
+            .embed(embed)
             .components(vec![]),
     );
     last_interaction.create_response(ctx, response).await?;

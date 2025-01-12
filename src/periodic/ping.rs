@@ -35,18 +35,24 @@ fn embed(tasks: Vec<Task>) -> CreateEmbed {
     }
 }
 
+fn tomorrow(now: DateTime<Local>) -> (DateTime<Local>, DateTime<Local>) {
+    let from = (now + Duration::days(1))
+        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        .unwrap();
+    let to = (now + Duration::days(2))
+        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        .unwrap();
+
+    (from, to)
+}
+
 pub async fn ping(ctx: &Context) -> Result<(), Error> {
     let data = data::load()?;
 
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
     let ping_role = (*data.ping_role.lock().unwrap()).context("Ping role not set")?;
 
-    let from = (Local::now() + Duration::days(1))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-    let to = (Local::now() + Duration::days(2))
-        .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
+    let (from, to) = tomorrow(Local::now());
 
     println!("Searching tasks: from {} to {}", from, to);
 
@@ -67,11 +73,10 @@ pub async fn ping(ctx: &Context) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
+pub async fn update(ctx: &PoiseContext<'_>) -> Result<Option<Message>, Error> {
     let data = data::load()?;
 
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
-    let ping_role = (*data.ping_role.lock().unwrap()).context("Ping role not set")?;
 
     let prev_messages = ping_channel
         .messages(ctx, GetMessages::default())
@@ -85,34 +90,25 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<(), Error> {
                 && m.referenced_message.is_none()
         });
 
-    for prev_message in prev_messages {
-        let from = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(1))
-            .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-            .unwrap();
-        let to = (prev_message.id.created_at().with_timezone(&Local) + Duration::days(2))
-            .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-            .unwrap();
+    for mut prev_message in prev_messages {
+        let (from, to) = tomorrow(prev_message.id.created_at().with_timezone(&Local));
 
         let prev_embed = prev_message.embeds[0].clone();
+        let new_embed = embed(search_tasks(from, to)?);
 
-        if CreateEmbed::from(prev_embed) != embed(search_tasks(from, to)?) {
-            ping_channel
-                .send_message(
-                    ctx,
-                    CreateMessage::default()
-                        .reference_message(&prev_message)
-                        .content(format!(
-                            "{}\n更新があります！ご注意ください！",
-                            ping_role.mention()
-                        ))
-                        .embed(embed(search_tasks(from, to)?)),
-                )
+        if CreateEmbed::from(prev_embed) != new_embed {
+            prev_message
+                .edit(ctx, EditMessage::default().embed(new_embed))
                 .await?;
             println!("{}: Message updated", prev_message.id.created_at());
+            return Ok(Some(prev_message));
         } else {
-            println!("{}: No changes; Updating not needed", prev_message.id.created_at());
+            println!(
+                "{}: No changes; Updating not needed",
+                prev_message.id.created_at()
+            );
         }
     }
 
-    Ok(())
+    Ok(None)
 }

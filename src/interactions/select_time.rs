@@ -5,13 +5,13 @@ use chrono::{Duration, NaiveTime};
 use futures::StreamExt;
 use poise::serenity_prelude::*;
 
-use crate::PoiseContext;
+use crate::{utilities::ResponsiveInteraction, PoiseContext};
 
 pub async fn select_time(
     ctx: PoiseContext<'_>,
-    interaction: Option<ComponentInteraction>,
+    interaction: Option<ResponsiveInteraction>,
     embed: Option<CreateEmbed>,
-) -> Result<(ComponentInteraction, NaiveTime), Error> {
+) -> Result<(ResponsiveInteraction, NaiveTime), Error> {
     const HOUR: &str = "hour";
     const MINUTE: &str = "minute";
     const SUBMIT: &str = "submit";
@@ -113,7 +113,7 @@ pub async fn select_time(
     }
 
     Ok((
-        last_interaction.context("No interaction")?,
+        ResponsiveInteraction::Component(last_interaction.context("No interaction")?),
         NaiveTime::from_hms_opt(
             hour.context("Hour not selected")?,
             minute.context("Minute not selected")?,

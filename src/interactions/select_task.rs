@@ -4,13 +4,13 @@ use futures::StreamExt;
 use itertools::Itertools;
 use poise::serenity_prelude::*;
 
-use crate::{utilities::format_datetime, PoiseContext, Task};
+use crate::{utilities::{format_datetime, ResponsiveInteraction}, PoiseContext, Task};
 
 pub async fn select_task(
     ctx: PoiseContext<'_>,
-    interaction: Option<ComponentInteraction>,
+    interaction: Option<ResponsiveInteraction>,
     embed: Option<CreateEmbed>,
-) -> Result<(ComponentInteraction, Task), Error> {
+) -> Result<(ResponsiveInteraction, Task), Error> {
     const TASK: &str = "task";
     const SUBMIT: &str = "submit";
     const PREV: &str = "prev";
@@ -142,7 +142,7 @@ pub async fn select_task(
     }
 
     Ok((
-        last_interaction.context("No interaction")?,
+        ResponsiveInteraction::Component(last_interaction.context("No interaction")?),
         task.context("Task not selected")?,
     ))
 }

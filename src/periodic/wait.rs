@@ -9,7 +9,7 @@ pub async fn wait(ctx: Context) {
         let now = Local::now();
         let target_time = {
             let time = Local::now()
-                .with_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap())
+                .with_time(NaiveTime::from_hms_opt(20, 57, 0).unwrap())
                 .unwrap();
             if time < now {
                 time + Duration::days(1)

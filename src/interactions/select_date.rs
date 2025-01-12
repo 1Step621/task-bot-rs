@@ -4,7 +4,7 @@ use futures::StreamExt;
 use poise::serenity_prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::PoiseContext;
+use crate::{utilities::ResponsiveInteraction, PoiseContext};
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 struct MonthHalf {
@@ -28,9 +28,9 @@ impl From<MonthHalf> for String {
 
 pub async fn select_date(
     ctx: PoiseContext<'_>,
-    interaction: Option<ComponentInteraction>,
+    interaction: Option<ResponsiveInteraction>,
     embed: Option<CreateEmbed>,
-) -> Result<(ComponentInteraction, NaiveDate), Error> {
+) -> Result<(ResponsiveInteraction, NaiveDate), Error> {
     const YEAR: &str = "year";
     const MONTH: &str = "month";
     const DAY: &str = "day";
@@ -189,5 +189,5 @@ pub async fn select_date(
         }
     }
 
-    Ok((last_interaction.context("No interaction")?, date))
+    Ok((ResponsiveInteraction::Component(last_interaction.context("No interaction")?), date))
 }
