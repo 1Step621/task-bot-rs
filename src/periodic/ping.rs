@@ -73,10 +73,11 @@ pub async fn ping(ctx: &Context) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn update(ctx: &PoiseContext<'_>) -> Result<Option<Message>, Error> {
+pub async fn update(ctx: &PoiseContext<'_>) -> Result<Vec<Message>, Error> {
     let data = data::load()?;
 
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
+    let mut updated_messages = vec![];
 
     let prev_messages = ping_channel
         .messages(ctx, GetMessages::default())
@@ -101,7 +102,7 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<Option<Message>, Error> {
                 .edit(ctx, EditMessage::default().embed(new_embed))
                 .await?;
             println!("{}: Message updated", prev_message.id.created_at());
-            return Ok(Some(prev_message));
+            updated_messages.push(prev_message);
         } else {
             println!(
                 "{}: No changes; Updating not needed",
@@ -110,5 +111,5 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<Option<Message>, Error> {
         }
     }
 
-    Ok(None)
+    Ok(updated_messages)
 }

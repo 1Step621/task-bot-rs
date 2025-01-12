@@ -33,7 +33,7 @@ pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
         .fields(vec![task.to_field()])
         .color(Color::DARK_GREEN);
 
-    if let Some(message) = ping::update(&ctx).await? {
+    if let Some(message) = ping::update(&ctx).await?.last() {
         let announce;
         (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
         if announce {
@@ -47,7 +47,7 @@ pub async fn add_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
                             ping_role.mention()
                         ))
                         .embed(embed.clone())
-                        .reference_message(&message),
+                        .reference_message(message),
                 )
                 .await?;
         }
@@ -90,7 +90,7 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
         .fields(vec![task.to_field()])
         .color(Color::DARK_RED);
 
-    if let Some(message) = ping::update(&ctx).await? {
+    if let Some(message) = ping::update(&ctx).await?.last() {
         let announce;
         (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
         if announce {
@@ -104,7 +104,7 @@ pub async fn remove_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
                             ping_role.mention()
                         ))
                         .embed(embed.clone())
-                        .reference_message(&message),
+                        .reference_message(message),
                 )
                 .await?;
         }
@@ -166,7 +166,7 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
         ])
         .color(Color::DARK_GREEN);
 
-    if let Some(message) = ping::update(&ctx).await? {
+    if let Some(message) = ping::update(&ctx).await?.last() {
         let announce;
         (last_interaction, announce) = select_announce(ctx, Some(last_interaction)).await?;
         if announce {
@@ -180,7 +180,7 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
                             ping_role.mention()
                         ))
                         .embed(embed.clone())
-                        .reference_message(&message),
+                        .reference_message(message),
                 )
                 .await?;
         }
