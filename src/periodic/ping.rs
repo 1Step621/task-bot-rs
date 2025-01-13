@@ -12,7 +12,7 @@ fn search_tasks(from: DateTime<Local>, to: DateTime<Local>) -> Result<Vec<Task>,
 
     Ok(tasks
         .iter()
-        .filter(|task| from < task.datetime && task.datetime <= to)
+        .filter(|task| from <= task.datetime && task.datetime < to)
         .sorted_by_key(|task| task.datetime)
         .cloned()
         .collect())
