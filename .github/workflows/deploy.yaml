@@ -1,4 +1,4 @@
-name: deploy
+name: Deploy
 on: workflow_dispatch
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           port: ${{ secrets.PORT }}
           script: |
-            cd task-bot-rs || exit
+            cd task-bot-rs
             ./kill.sh
             ./run.sh
             ps ux | grep bot | grep -v grep | grep -v bash
