@@ -173,6 +173,7 @@ pub struct Data {
     pub panel_message: Mutex<Option<(MessageId, ChannelId)>>,
     pub ping_channel: Mutex<Option<ChannelId>>,
     pub ping_role: Mutex<Option<RoleId>>,
+    pub stop_ping_until: Mutex<DateTime<Local>>,
     pub log_channel: Mutex<Option<ChannelId>>,
     #[serde(skip)]
     pub panel_listener: Mutex<Option<tokio::task::JoinHandle<Result<(), Error>>>>,

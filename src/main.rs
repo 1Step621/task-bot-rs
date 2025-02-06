@@ -29,6 +29,8 @@ async fn event_handler(
                     *data.panel_message.lock().unwrap() = *restore.panel_message.lock().unwrap();
                     *data.ping_channel.lock().unwrap() = *restore.ping_channel.lock().unwrap();
                     *data.ping_role.lock().unwrap() = *restore.ping_role.lock().unwrap();
+                    *data.stop_ping_until.lock().unwrap() =
+                        *restore.stop_ping_until.lock().unwrap();
                     *data.log_channel.lock().unwrap() = *restore.log_channel.lock().unwrap();
                     println!("Config restored:");
                     println!("{:#?}", data);
@@ -80,6 +82,8 @@ async fn main() {
                 panel::deploy_panel(),
                 ping_config::set_ping_channel(),
                 ping_config::set_ping_role(),
+                ping_config::stop_ping(),
+                ping_config::resume_ping(),
                 log_config::set_log_channel(),
             ],
             event_handler: |ctx, event, framework, data| {

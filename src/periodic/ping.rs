@@ -49,6 +49,12 @@ fn tomorrow(now: DateTime<Local>) -> (DateTime<Local>, DateTime<Local>) {
 pub async fn ping(ctx: &Context) -> Result<(), Error> {
     let data = data::load()?;
 
+    let stop_ping_until = *data.stop_ping_until.lock().unwrap();
+    if Local::now() < stop_ping_until {
+        println!("Ping stopped until {}", stop_ping_until);
+        return Ok(());
+    }
+
     let ping_channel = (*data.ping_channel.lock().unwrap()).context("Ping channel not set")?;
     let ping_role = (*data.ping_role.lock().unwrap()).context("Ping role not set")?;
 
