@@ -22,6 +22,9 @@ jobs:
       - name: Build
         run: cargo build --release
 
+      - name: Rename binary
+        run: mv ./target/x86_64-unknown-linux-musl/release/task-bot-rs ./task-bot-rs-new
+
       - name: Send to server
         uses: appleboy/scp-action@master
         with:
@@ -30,7 +33,7 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           port: ${{ secrets.PORT }}
-          source: ./target/x86_64-unknown-linux-musl/release/task-bot-rs
+          source: ./task-bot-rs-new
           target: ~/task-bot-rs
           overwrite: true
 
@@ -44,6 +47,8 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             cd task-bot-rs
+            rm task-bot-rs
+            mv task-bot-rs-new task-bot-rs
             ./kill.sh
             ./run.sh
             ps ux | grep bot | grep -v grep | grep -v bash
