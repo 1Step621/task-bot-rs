@@ -14,9 +14,13 @@ const TASKS_PER_PAGE: usize = 7;
 
 #[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
 /// パネルをデプロイします。
-pub async fn deploy_panel(ctx: PoiseContext<'_>) -> Result<(), Error> {
-    let message = ctx
-        .channel_id()
+pub async fn deploy_panel(
+    ctx: PoiseContext<'_>,
+    #[description = "パネルをデプロイするチャンネル"] channel: Option<Channel>,
+) -> Result<(), Error> {
+    let message = channel
+        .map(|c| c.id())
+        .unwrap_or(ctx.channel_id())
         .send_message(
             ctx,
             CreateMessage::default()
