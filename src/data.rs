@@ -94,16 +94,16 @@ pub struct Task {
 
 impl Task {
     pub fn to_field(&self) -> (String, String, bool) {
-        self.clone().into()
+        self.into()
     }
 
-    pub fn as_partial(&self) -> PartialTask {
-        self.clone().into()
+    pub fn into_partial(self) -> PartialTask {
+        self.into()
     }
 }
 
-impl From<Task> for (String, String, bool) {
-    fn from(task: Task) -> Self {
+impl From<&Task> for (String, String, bool) {
+    fn from(task: &Task) -> Self {
         (
             format!(
                 "【{}】{}{}",
@@ -128,8 +128,8 @@ impl From<Task> for PartialTask {
     fn from(task: Task) -> Self {
         Self {
             category: Some(task.category),
-            subject: Some(task.subject.clone()),
-            details: Some(task.details.clone()),
+            subject: Some(task.subject),
+            details: Some(task.details),
             date: Some(task.datetime.date_naive()),
             time: Some(task.datetime.time()),
         }
@@ -146,10 +146,10 @@ pub struct PartialTask {
 }
 
 impl PartialTask {
-    pub fn unpartial(&self) -> Result<Task, Error> {
+    pub fn unpartial(self) -> Result<Task, Error> {
         let category = self.category.context("Category not selected")?;
-        let subject = self.subject.clone().context("Subject not selected")?;
-        let details = self.details.clone().context("Details not selected")?;
+        let subject = self.subject.context("Subject not selected")?;
+        let details = self.details.context("Details not selected")?;
         let date = self.date.context("Date not selected")?;
         let time = self.time.context("Time not selected")?;
         let datetime = Local

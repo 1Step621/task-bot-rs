@@ -146,7 +146,7 @@ pub async fn edit_task(ctx: PoiseContext<'_>) -> Result<(), Error> {
                 .title("タスクを編集します".to_string())
                 .color(Color::DARK_BLUE),
         ),
-        task.as_partial(),
+        task.clone().into_partial(),
     )
     .await?;
 
