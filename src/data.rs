@@ -44,7 +44,7 @@ impl Display for Category {
 }
 
 impl Category {
-    pub const VALUES: [Category; 5] = [
+    pub const VALUES: [Category; std::mem::variant_count::<Category>()] = [
         Category::Event,
         Category::Exam,
         Category::Homework,

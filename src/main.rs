@@ -1,3 +1,5 @@
+#![feature(variant_count)]
+
 use anyhow::Error;
 use data::{Category, Data, PartialTask, Subject, Task};
 use dotenvy::dotenv;
