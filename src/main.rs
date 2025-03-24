@@ -101,6 +101,8 @@ async fn main() {
         })
         .build();
 
+    println!("Running task-bot-rs {}", env!("CARGO_PKG_VERSION"));
+
     let client = ClientBuilder::new(token, intents)
         .framework(framework)
         .await;
