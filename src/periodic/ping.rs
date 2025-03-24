@@ -95,6 +95,8 @@ pub async fn update(ctx: &PoiseContext<'_>) -> Result<Vec<Message>, Error> {
             m.author.id == ctx.framework().bot_id
                 && Local::now().date_naive() - TimeDelta::days(1) <= m.id.created_at().date_naive()
                 && m.referenced_message.is_none()
+                && m.interaction_metadata.is_none()
+                && m.embeds[0].title.clone().unwrap() == "タスク通知"
         });
 
     for mut prev_message in prev_messages {
