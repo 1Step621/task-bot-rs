@@ -6,9 +6,9 @@ use futures::StreamExt;
 use poise::serenity_prelude::*;
 
 use crate::{
-    interactions::{select_date, select_time},
-    utilities::{format_date, ResponsiveInteraction},
     Category, PartialTask, PoiseContext, Subject, Task,
+    interactions::{select_date, select_time},
+    utilities::{ResponsiveInteraction, format_date},
 };
 
 pub async fn create_task(
@@ -26,7 +26,7 @@ pub async fn create_task(
     let subjects = ctx.data().subjects.lock().unwrap().clone();
     let suggest_times = ctx.data().suggest_times.lock().unwrap().clone();
 
-    let components = |task: &PartialTask| {
+    let components = |task: &PartialTask, submitted: bool| {
         let category_options = CreateSelectMenuKind::String {
             options: Category::VALUES
                 .iter()
@@ -111,21 +111,27 @@ pub async fn create_task(
                         .map_or("時間".into(), |x| x.format("%H:%M").to_string()),
                 ),
             ),
-            CreateActionRow::Buttons(vec![CreateButton::new(SUBMIT)
-                .style(ButtonStyle::Primary)
-                .label("送信")
-                .disabled(task.category.is_none() || task.subject.is_none())]),
+            CreateActionRow::Buttons(vec![
+                CreateButton::new(SUBMIT)
+                    .style(ButtonStyle::Primary)
+                    .label(if submitted {
+                        "(送信済み)"
+                    } else {
+                        "送信"
+                    })
+                    .disabled(submitted || task.category.is_none() || task.subject.is_none()),
+            ]),
         ]
     };
 
-    let message = if let Some(interaction) = interaction {
+    let mut message = if let Some(interaction) = interaction {
         let response = CreateInteractionResponse::UpdateMessage(
             if let Some(embed) = embed {
                 CreateInteractionResponseMessage::default().embed(embed)
             } else {
                 CreateInteractionResponseMessage::default()
             }
-            .components(components(&defaults)),
+            .components(components(&defaults, false)),
         );
         interaction.create_response(ctx, response).await?;
         interaction.get_response(ctx).await?
@@ -136,7 +142,7 @@ pub async fn create_task(
             } else {
                 poise::CreateReply::default()
             }
-            .components(components(&defaults)),
+            .components(components(&defaults, false)),
         )
         .await?
         .into_message()
@@ -171,12 +177,19 @@ pub async fn create_task(
                     _ => unreachable!(),
                 }
                 let response = CreateInteractionResponse::UpdateMessage(
-                    CreateInteractionResponseMessage::default().components(components(&task)),
+                    CreateInteractionResponseMessage::default()
+                        .components(components(&task, false)),
                 );
                 interaction.create_response(&ctx, response).await?;
             }
             ComponentInteractionDataKind::Button => {
                 if interaction.data.custom_id == SUBMIT {
+                    message
+                        .edit(
+                            ctx,
+                            EditMessage::default().components(components(&task, true)),
+                        )
+                        .await?;
                     last_interaction.replace(ResponsiveInteraction::Component(interaction));
                     break;
                 }
