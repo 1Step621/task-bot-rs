@@ -175,6 +175,7 @@ pub struct Data {
     pub ping_role: Mutex<Option<RoleId>>,
     pub stop_ping_until: Mutex<DateTime<Local>>,
     pub log_channel: Mutex<Option<ChannelId>>,
+    pub warn_users: Mutex<BTreeSet<UserId>>,
     #[serde(skip)]
     pub panel_listener: Mutex<Option<tokio::task::JoinHandle<Result<(), Error>>>>,
 }

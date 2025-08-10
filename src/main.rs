@@ -34,6 +34,7 @@ async fn event_handler(
                     *data.stop_ping_until.lock().unwrap() =
                         *restore.stop_ping_until.lock().unwrap();
                     *data.log_channel.lock().unwrap() = *restore.log_channel.lock().unwrap();
+                    *data.warn_users.lock().unwrap() = restore.warn_users.lock().unwrap().clone();
                     println!("Config restored:");
                     println!("{:#?}", data);
                 }
@@ -42,7 +43,8 @@ async fn event_handler(
                     data::save(data)?;
                 }
             }
-            tokio::spawn(periodic::wait(ctx.clone()));
+            tokio::spawn(periodic::every_day(ctx.clone()));
+            tokio::spawn(periodic::every_minute(ctx.clone()));
             if let Some(panel_message) = &*data.panel_message.lock().unwrap() {
                 data.panel_listener.lock().unwrap().replace(tokio::spawn(
                     commands::panel::listen_panel_interactions(ctx.clone(), *panel_message),
@@ -87,6 +89,8 @@ async fn main() {
                 ping_config::stop_ping(),
                 ping_config::resume_ping(),
                 log_config::set_log_channel(),
+                warn_config::enable_warn(),
+                warn_config::disable_warn(),
             ],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event_handler(ctx, event, framework, data))

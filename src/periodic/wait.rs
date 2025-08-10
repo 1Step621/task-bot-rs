@@ -1,10 +1,10 @@
-use chrono::{Duration, Local, NaiveTime};
+use chrono::{Duration, Local, NaiveTime, Timelike};
 use poise::serenity_prelude::*;
-use tokio::time::{sleep_until, Instant};
+use tokio::time::{Instant, sleep_until};
 
-use crate::periodic::{backup, ping};
+use crate::periodic::{backup, ping, warn};
 
-pub async fn wait(ctx: Context) {
+pub async fn every_day(ctx: Context) {
     loop {
         let now = Local::now();
         let target_time = {
@@ -17,14 +17,33 @@ pub async fn wait(ctx: Context) {
                 time
             }
         };
+        println!("[every_day] Next execution at {}", target_time);
         let sleep_duration = target_time - now;
-
-        println!("Now: {}", now);
-        println!("Next run: {}", target_time);
-        println!("Sleeping for {} seconds", sleep_duration.num_seconds());
 
         sleep_until(Instant::now() + sleep_duration.to_std().unwrap()).await;
         ping::ping(&ctx).await.expect("Failed to ping");
         backup::backup(&ctx).await.expect("Failed to backup");
+    }
+}
+
+pub async fn every_minute(ctx: Context) {
+    loop {
+        let now = Local::now();
+        let target_time = {
+            let time = Local::now()
+                .with_second(0)
+                .and_then(|t| t.with_nanosecond(0))
+                .unwrap();
+            if time < now {
+                time + Duration::minutes(1)
+            } else {
+                time
+            }
+        };
+        println!("[every_minute] Next execution at {}", target_time);
+        let sleep_duration = target_time - now;
+
+        sleep_until(Instant::now() + sleep_duration.to_std().unwrap()).await;
+        warn::warn(&ctx).await.expect("Failed to warn");
     }
 }

@@ -1,3 +1,4 @@
+pub mod warn_config;
 pub mod log_config;
 pub mod modify_subjects;
 pub mod modify_suggest_times;

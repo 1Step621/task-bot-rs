@@ -2,9 +2,9 @@ use anyhow::{Context as _, Error};
 use chrono::{Local, TimeZone};
 use poise::serenity_prelude::*;
 
-use crate::{data, interactions::select_date, PoiseContext};
+use crate::{PoiseContext, data, interactions::select_date};
 
-#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 /// タスク通知を送るチャンネルを設定します。
 pub async fn set_ping_channel(
     ctx: PoiseContext<'_>,
@@ -12,11 +12,7 @@ pub async fn set_ping_channel(
 ) -> Result<(), Error> {
     let channel_id = channel.map(|c| c.id()).unwrap_or(ctx.channel_id());
 
-    ctx.data()
-        .ping_channel
-        .lock()
-        .unwrap()
-        .replace(channel_id);
+    ctx.data().ping_channel.lock().unwrap().replace(channel_id);
     data::save(ctx.data())?;
 
     ctx.send(
@@ -32,7 +28,7 @@ pub async fn set_ping_channel(
     Ok(())
 }
 
-#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 /// タスク通知を送るロールを設定します。
 pub async fn set_ping_role(
     ctx: PoiseContext<'_>,
@@ -56,7 +52,7 @@ pub async fn set_ping_role(
     Ok(())
 }
 
-#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 /// タスク通知をある日付まで停止します。
 pub async fn stop_ping(ctx: PoiseContext<'_>) -> Result<(), Error> {
     let (last_interaction, date) = select_date(
@@ -100,7 +96,7 @@ pub async fn stop_ping(ctx: PoiseContext<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 /// 通知の停止を解除します。
 pub async fn resume_ping(ctx: PoiseContext<'_>) -> Result<(), Error> {
     *ctx.data().stop_ping_until.lock().unwrap() = Local::now();

@@ -4,15 +4,15 @@ use anyhow::{Context as _, Error};
 use chrono::Local;
 use itertools::Itertools;
 use poise::serenity_prelude::*;
-use {futures::StreamExt, Mentionable};
+use {Mentionable, futures::StreamExt};
 
-use crate::{data, PoiseContext};
+use crate::{PoiseContext, data};
 
 const TASKS: &str = "tasks";
 const ARCHIVED_TASKS: &str = "archived_tasks";
 const TASKS_PER_PAGE: usize = 7;
 
-#[poise::command(slash_command, required_permissions = "MANAGE_GUILD")]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_GUILD")]
 /// パネルをデプロイします。
 pub async fn deploy_panel(
     ctx: PoiseContext<'_>,
