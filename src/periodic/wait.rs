@@ -11,7 +11,7 @@ pub async fn every_day(ctx: Context) {
             let time = Local::now()
                 .with_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap())
                 .unwrap();
-            if time < now {
+            if time <= now {
                 time + Duration::days(1)
             } else {
                 time
